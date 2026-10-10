@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(-45deg, #1a0d05, #2d1a3d, #3d1520, #1f1a4d, #2b1508);
+            background-size: 500% 500%;
+            animation: gradientShift 25s ease infinite;
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            25%  { background-position: 50% 100%; }
+            50%  { background-position: 100% 50%; }
+            75%  { background-position: 50% 0%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .orb { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.35; animation: float 16s ease-in-out infinite; pointer-events: none; }
+        .orb1 { width: 380px; height: 380px; background: #dc2626; top: -100px; left: -100px; }
+        .orb2 { width: 400px; height: 400px; background: #a855f7; bottom: -150px; right: -150px; animation-delay: 3s; }
+        .orb3 { width: 300px; height: 300px; background: #f97316; top: 30%; right: 5%; animation-delay: 6s; }
+        .orb4 { width: 320px; height: 320px; background: #3b82f6; bottom: 10%; left: 20%; animation-delay: 9s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50%      { transform: translate(50px, -40px) scale(1.15); }
+        }
+
+        .dashboard-container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 10; }
+
+        .topbar {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 25px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 200, 200, 0.18);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            margin-bottom: 25px;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+            overflow: hidden;
+        }
+
+        .topbar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #dc2626, #f97316, #92400e, #a855f7, #3b82f6, #dc2626);
+            background-size: 200% 100%;
+            animation: gradientLine 8s linear infinite;
+        }
+
+        @keyframes gradientLine {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        @keyframes slideDown { to { opacity: 1; transform: translateY(0); } }
+
+        .admin-title h3 { color: #fff; font-size: 17px; font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+        .admin-title h3 .badge-admin {
+            font-size: 10px;
+            padding: 3px 8px;
+            background: linear-gradient(90deg, rgba(220, 38, 38, 0.3), rgba(168, 85, 247, 0.3));
+            border: 1px solid rgba(255, 200, 200, 0.4);
+            color: #fbcfe8;
+            border-radius: 6px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .admin-title p { color: rgba(255, 225, 230, 0.7); font-size: 12.5px; }
+
+        .logout-btn {
+            padding: 9px 20px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, rgba(220, 38, 38, 0.25), rgba(249, 115, 22, 0.25));
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            color: #fca5a5;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background: linear-gradient(90deg, rgba(220, 38, 38, 0.5), rgba(249, 115, 22, 0.5));
+            color: #fff;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr; } }
+
+        /* Stat cards - clickable */
+        .stat-card {
+            position: relative;
+            padding: 22px 20px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 200, 200, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.3s; }
+        .stat-card:nth-child(2) { animation-delay: 0.4s; }
+        .stat-card:nth-child(3) { animation-delay: 0.5s; }
+        .stat-card:nth-child(4) { animation-delay: 0.6s; }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .stat-card.active {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.15), 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .stat-card.total::before     { background: linear-gradient(180deg, #a855f7, #6366f1); }
+        .stat-card.pending::before   { background: linear-gradient(180deg, #f97316, #92400e); }
+        .stat-card.progress::before  { background: linear-gradient(180deg, #3b82f6, #06b6d4); }
+        .stat-card.resolved::before  { background: linear-gradient(180deg, #10b981, #059669); }
+
+        /* Icon backgrounds matching each card type */
+        .stat-card .icon-stat {
+            position: absolute;
+            top: 50%;
+            right: 18px;
+            transform: translateY(-50%);
+            font-size: 28px;
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            opacity: 0.9;
+        }
+
+        .stat-card.total .icon-stat    { background: rgba(168, 85, 247, 0.2); }
+        .stat-card.pending .icon-stat  { background: rgba(249, 115, 22, 0.2); }
+        .stat-card.progress .icon-stat { background: rgba(59, 130, 246, 0.2); }
+        .stat-card.resolved .icon-stat { background: rgba(16, 185, 129, 0.2); }
+
+        .stat-card .label {
+            color: rgba(255, 225, 230, 0.75);
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            color: #fff;
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-card .hint {
+            margin-top: 8px;
+            font-size: 10.5px;
+            color: rgba(255, 225, 230, 0.5);
+            letter-spacing: 0.3px;
+        }
+
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        <div style="text-align: center; margin-bottom: 20px;">
+        <button type="button" onclick="toggleAnalytics()" id="analyticsBtn" style="padding: 12px 30px; border-radius: 14px; background: linear-gradient(90deg, #a855f7, #ec4899, #f97316); background-size: 200% 100%; animation: gradientLine 5s linear infinite; border: none; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    📊 Show Analytics
+        </button>
+        </div>
+
+        <!-- Analytics Section (hidden by default) -->
+        <div id="analyticsSection" style="display: none; margin-bottom: 25px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 22px;">
+
+        <!-- Chart 1: Status Doughnut -->
+        <div class="glass-panel" style="animation-delay: 0s; padding: 25px;">
+        <h4 style="color: #fff; font-size: 16px; font-weight: 600; margin-bottom: 20px; text-align: center;">🎯 Status Distribution</h4>
+        <div style="position: relative; height: 280px;">
+        <canvas id="statusChart"></canvas>
+        </div>
+        </div>
+
+        <!-- Chart 2: Category Bar -->
+        <div class="glass-panel" style="animation-delay: 0.15s; padding: 25px;">
+        <h4 style="color: #fff; font-size: 16px; font-weight: 600; margin-bottom: 20px; text-align: center;">📂 Category-wise Problems</h4>
+        <div style="position: relative; height: 280px;">
+        <canvas id="categoryChart"></canvas>
+        </div>
+        </div>
+        </div>
+        </div>
+        .glass-panel {
+            position: relative;
+            padding: 28px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 200, 200, 0.18);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #dc2626, #f97316, #92400e, #a855f7, #3b82f6, #dc2626);
+            background-size: 200% 100%;
+            animation: gradientLine 8s linear infinite;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .panel-header h4 {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-header h4 .active-filter {
+            font-size: 11px;
+            padding: 3px 10px;
+            background: rgba(168, 85, 247, 0.25);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            color: #e9d5ff;
+            border-radius: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 200, 200, 0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        thead {
+            background: linear-gradient(90deg, rgba(220, 38, 38, 0.12), rgba(168, 85, 247, 0.12), rgba(59, 130, 246, 0.12));
+        }
+
+        th {
+            padding: 14px 16px;
+            text-align: left;
+            color: #fbcfe8;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            border-bottom: 1px solid rgba(255, 200, 200, 0.2);
+        }
+
+        td {
+            padding: 14px 16px;
+            color: #fff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        tbody tr { transition: background 0.25s; }
+        tbody tr:hover { background: rgba(168, 85, 247, 0.08); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .empty-row td {
+            text-align: center;
+            padding: 50px 20px;
+            color: rgba(255, 225, 230, 0.6);
+            font-size: 13px;
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 4px 11px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .status-PENDING     { background: rgba(249, 115, 22, 0.2);  color: #fdba74; border: 1px solid rgba(249, 115, 22, 0.5); }
+        .status-IN_PROGRESS { background: rgba(59, 130, 246, 0.2);  color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.5); }
+        .status-RESOLVED    { background: rgba(16, 185, 129, 0.2);  color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.5); }
+        .status-REJECTED    { background: rgba(220, 38, 38, 0.2);   color: #fca5a5; border: 1px solid rgba(220, 38, 38, 0.5); }
+
+        .view-btn {
+            padding: 8px 16px;
+            border-radius: 9px;
+            background: linear-gradient(90deg, #dc2626, #a855f7, #3b82f6);
+            background-size: 200% 100%;
+            border: none;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .view-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+        }
+
+        .view-btn.secondary {
+            background: linear-gradient(90deg, #666, #444);
+        }
+    </style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="orb orb4"></div>
+
+<div class="dashboard-container">
+    <div class="topbar">
+        <div class="admin-title">
+            <h3>🛡️ Admin Dashboard <span class="badge-admin">ADMIN</span></h3>
+            <p>Manage and resolve student problems</p>
+        </div>
+        <a th:href="@{/admin/logout}" class="logout-btn">🚪 Logout</a>
+    </div>
+
+    <!-- CLICKABLE STAT CARDS -->
+    <div class="stats-row">
+        <a th:href="@{/admin/dashboard}" class="stat-card total"
+           th:classappend="${filterStatus == null || filterStatus == ''} ? 'active' : ''">
+            <div class="label">Total Problems</div>
+            <div class="value" th:text="${total}">0</div>
+            <div class="hint">Click to view all</div>
+            <div class="icon-stat">📊</div>
+        </a>
+
+        <a th:href="@{/admin/dashboard(status='PENDING')}" class="stat-card pending"
+           th:classappend="${filterStatus == 'PENDING'} ? 'active' : ''">
+            <div class="label">Pending</div>
+            <div class="value" th:text="${pending}">0</div>
+            <div class="hint">Not started yet</div>
+            <div class="icon-stat">⏳</div>
+        </a>
+
+        <a th:href="@{/admin/dashboard(status='IN_PROGRESS')}" class="stat-card progress"
+           th:classappend="${filterStatus == 'IN_PROGRESS'} ? 'active' : ''">
+            <div class="label">In Progress</div>
+            <div class="value" th:text="${inProgress}">0</div>
+            <div class="hint">Being worked on</div>
+            <div class="icon-stat">🔧</div>
+        </a>
+
+        <a th:href="@{/admin/dashboard(status='RESOLVED')}" class="stat-card resolved"
+           th:classappend="${filterStatus == 'RESOLVED'} ? 'active' : ''">
+            <div class="label">Resolved</div>
+            <div class="value" th:text="${resolved}">0</div>
+            <div class="hint">Issue fixed</div>
+            <div class="icon-stat">✅</div>
+        </a>
+    </div>
+
+    <div class="glass-panel">
+        <div class="panel-header">
+            <h4>
+                📋 Problems
+                <span class="active-filter" th:if="${filterStatus != null && filterStatus != ''}"
+                      th:text="${filterStatus}">PENDING</span>
+                <span class="active-filter" th:if="${filterStatus == null || filterStatus == ''}">ALL</span>
+            </h4>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Student</th>
+                    <th>Roll</th>
+                    <th>Category</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${problems.isEmpty()}">
+                    <td colspan="8" class="empty-row">📭 No problems found. Student submissions will appear here.</td>
+                </tr>
+
+                <tr th:each="p : ${problems}">
+                    <td th:text="${p.id}"></td>
+                    <td th:text="${p.studentName}"></td>
+                    <td th:text="${p.studentRoll}"></td>
+                    <td th:text="${p.category}"></td>
+                    <td th:text="${p.title}"></td>
+                    <td>
+                                <span class="badge-status"
+                                      th:classappend="${p.status == 'PENDING'} ? 'status-PENDING' :
+                                                      (${p.status == 'IN_PROGRESS'} ? 'status-IN_PROGRESS' :
+                                                      (${p.status == 'RESOLVED'} ? 'status-RESOLVED' : 'status-REJECTED'))"
+                                      th:text="${p.status}"></span>
+                    </td>
+                    <td th:text="${#temporals.format(p.createdAt, 'dd MMM, HH:mm')}"></td>
+                    <td>
+                        <button type="button" class="view-btn"
+                                th:attr="data-id=${p.id},data-status=${p.status},data-remark=${p.adminRemark}"
+                                onclick="openUpdate(this)">🔧 Update</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Update Modal -->
+<div id="updateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: rgba(30, 20, 40, 0.98); backdrop-filter: blur(20px); border: 1px solid rgba(255,200,200,0.3); border-radius: 20px; padding: 35px; width: 90%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);">
+
+        <h3 style="color: #fff; margin-bottom: 20px; font-size: 18px; display: flex; align-items: center; gap: 10px;">🔧 Update Problem</h3>
+
+        <form method="post" id="updateForm">
+            <div style="margin-bottom: 15px;">
+                <label style="color: rgba(255,225,230,0.85); font-size: 13px; display: block; margin-bottom: 8px;">Status</label>
+                <select name="status" id="updateStatus" style="width: 100%; padding: 11px 14px; border-radius: 11px; background: rgba(146,64,14,0.15); border: 1px solid rgba(146,64,14,0.4); color: #fff; font-family: 'Poppins', sans-serif; outline: none; cursor: pointer;" required>
+                    <option value="PENDING">Pending</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="REJECTED">Rejected</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="color: rgba(255,225,230,0.85); font-size: 13px; display: block; margin-bottom: 8px;">Admin Remark</label>
+                <textarea name="remark" id="updateRemark" rows="3" style="width: 100%; padding: 11px 14px; border-radius: 11px; background: rgba(146,64,14,0.15); border: 1px solid rgba(146,64,14,0.4); color: #fff; font-family: 'Poppins', sans-serif; outline: none; resize: vertical;" placeholder="Write remark like 'Fixed by IT team'..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="view-btn" style="flex: 1; padding: 12px; font-size: 14px;">✅ Update</button>
+                <button type="button" onclick="closeUpdate()" class="view-btn secondary" style="flex: 1; padding: 12px; font-size: 14px;">❌ Cancel</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script th:inline="javascript">
+    function openUpdate(btn) {
+        var id = btn.getAttribute('data-id');
+        var status = btn.getAttribute('data-status');
+        var remark = btn.getAttribute('data-remark');
+
+        document.getElementById('updateForm').action = '/admin/update/' + id;
+        document.getElementById('updateStatus').value = status;
+        document.getElementById('updateRemark').value = (remark && remark !== 'null') ? remark : '';
+        document.getElementById('updateModal').style.display = 'flex';
+    }
+
+    function closeUpdate() {
+        document.getElementById('updateModal').style.display = 'none';
+    }
+
+    // ===== ANALYTICS DATA FROM BACKEND =====
+    var chartData = {
+        pending: [[${pending}]],
+        inProgress: [[${inProgress}]],
+        resolved: [[${resolved}]],
+        rejected: [[${rejected}]],
+        categories: {
+            labels: ['WiFi / Internet', 'Hostel', 'Computer Lab', 'Library', 'Canteen', 'Other'],
+            values: [
+                [[${categoryMap['WiFi / Internet']}]],
+                [[${categoryMap['Hostel']}]],
+                [[${categoryMap['Computer Lab']}]],
+                [[${categoryMap['Library']}]],
+                [[${categoryMap['Canteen']}]],
+                [[${categoryMap['Other']}]]
+            ]
+        }
+    };
+
+    var statusChartInstance = null;
+    var categoryChartInstance = null;
+
+    function toggleAnalytics() {
+        var section = document.getElementById('analyticsSection');
+        var btn = document.getElementById('analyticsBtn');
+
+        if (section.style.display === 'none' || section.style.display === '') {
+            section.style.display = 'block';
+            btn.innerHTML = '📊 Hide Analytics';
+
+            if (!statusChartInstance) {
+                renderStatusChart();
+                renderCategoryChart();
+            }
+
+            setTimeout(function() {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        } else {
+            section.style.display = 'none';
+            btn.innerHTML = '📊 Show Analytics';
+        }
+    }
+
+    function renderStatusChart() {
+        var ctx = document.getElementById('statusChart').getContext('2d');
+        statusChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'In Progress', 'Resolved', 'Rejected'],
+                datasets: [{
+                    data: [
+                        chartData.pending,
+                        chartData.inProgress,
+                        chartData.resolved,
+                        chartData.rejected
+                    ],
+                    backgroundColor: [
+                        'rgba(249, 115, 22, 0.85)',
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgba(220, 38, 38, 0.85)'
+                    ],
+                    borderColor: [
+                        'rgba(249, 115, 22, 1)',
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(220, 38, 38, 1)'
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 12
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#fff',
+                            font: { family: 'Poppins', size: 12 },
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        titleFont: { family: 'Poppins' },
+                        bodyFont: { family: 'Poppins' },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+    }
+
+    function renderCategoryChart() {
+        var ctx = document.getElementById('categoryChart').getContext('2d');
+        categoryChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.categories.labels,
+                datasets: [{
+                    label: 'Number of Problems',
+                    data: chartData.categories.values,
+                    backgroundColor: [
+                        'rgba(168, 85, 247, 0.75)',
+                        'rgba(220, 38, 38, 0.75)',
+                        'rgba(59, 130, 246, 0.75)',
+                        'rgba(249, 115, 22, 0.75)',
+                        'rgba(16, 185, 129, 0.75)',
+                        'rgba(146, 64, 14, 0.75)'
+                    ],
+                    borderColor: [
+                        'rgba(168, 85, 247, 1)',
+                        'rgba(220, 38, 38, 1)',
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(249, 115, 22, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(146, 64, 14, 1)'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: { family: 'Poppins' },
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.08)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: { family: 'Poppins', size: 10 },
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        titleFont: { family: 'Poppins' },
+                        bodyFont: { family: 'Poppins' },
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
+    }
+</script>
+</body>
+</html>

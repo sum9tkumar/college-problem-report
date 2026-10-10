@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(-45deg, #0a1f1a, #142c4a, #1a3d2e, #2d1b4e, #0f3d2e);
+            background-size: 500% 500%;
+            animation: gradientShift 25s ease infinite;
+            padding: 30px 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            25%  { background-position: 50% 100%; }
+            50%  { background-position: 100% 50%; }
+            75%  { background-position: 50% 0%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Multi-colour floating orbs */
+        .orb { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.4; animation: float 15s ease-in-out infinite; pointer-events: none; }
+        .orb1 { width: 380px; height: 380px; background: #10b981; top: -100px; left: -100px; }
+        .orb2 { width: 400px; height: 400px; background: #ef4444; bottom: -150px; right: -150px; animation-delay: 3s; }
+        .orb3 { width: 350px; height: 350px; background: #3b82f6; top: 30%; right: 5%; animation-delay: 6s; }
+        .orb4 { width: 300px; height: 300px; background: #a855f7; bottom: 10%; left: 20%; animation-delay: 9s; }
+        .orb5 { width: 250px; height: 250px; background: #06b6d4; top: 10%; left: 40%; animation-delay: 12s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50%      { transform: translate(50px, -40px) scale(1.15); }
+        }
+
+        .dashboard-container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 10; }
+
+        /* Topbar with multi-colour gradient border */
+        .topbar {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 25px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            margin-bottom: 25px;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+            overflow: hidden;
+        }
+
+        /* Gradient glow line on top of topbar */
+        .topbar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #10b981, #06b6d4, #3b82f6, #a855f7, #ef4444);
+            background-size: 200% 100%;
+            animation: gradientLine 6s linear infinite;
+        }
+
+        @keyframes gradientLine {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        @keyframes slideDown { to { opacity: 1; transform: translateY(0); } }
+
+        .welcome-text h3 { color: #fff; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+        .welcome-text h3 .accent-green { color: #10b981; }
+        .welcome-text p { color: rgba(209, 250, 229, 0.7); font-size: 12.5px; }
+
+        .logout-btn {
+            padding: 9px 20px;
+            border-radius: 12px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.35);
+            color: #fff;
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+        @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+        .glass-panel {
+            position: relative;
+            padding: 30px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            overflow: hidden;
+        }
+
+        /* Colour accent bar on top of each panel */
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        /* Panel 1 (Submit) - green to cyan to blue */
+        .glass-panel:nth-of-type(1)::before {
+            background: linear-gradient(90deg, #10b981, #06b6d4, #3b82f6);
+            background-size: 200% 100%;
+            animation: gradientLine 5s linear infinite;
+        }
+
+        /* Panel 2 (My Problems) - purple to pink to red */
+        .glass-panel:nth-of-type(2)::before {
+            background: linear-gradient(90deg, #a855f7, #ec4899, #ef4444);
+            background-size: 200% 100%;
+            animation: gradientLine 5s linear infinite;
+        }
+
+        .glass-panel:nth-of-type(1) { animation-delay: 0.4s; }
+        .glass-panel:nth-of-type(2) { animation-delay: 0.55s; }
+
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        .glass-panel h4 {
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-panel h4 .emoji-green  { filter: hue-rotate(0deg); }
+        .glass-panel h4 .emoji-purple { filter: hue-rotate(0deg); }
+
+        .form-group { margin-bottom: 15px; text-align: left; }
+
+        .form-group label {
+            display: block;
+            color: rgba(209, 250, 229, 0.85);
+            font-size: 12.5px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        /* Inputs - blue/cyan focus */
+        .glass-input, .glass-textarea, .glass-select {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 11px;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            color: #fff;
+            font-size: 13.5px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .glass-input:focus, .glass-textarea:focus, .glass-select:focus {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(6, 182, 212, 0.8);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25), 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+
+        .glass-select option { background: #142c4a; color: #fff; }
+
+        .glass-textarea { resize: vertical; min-height: 90px; }
+
+        /* Submit button - multi-colour gradient */
+        .submit-btn {
+            position: relative;
+            width: 100%;
+            padding: 13px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #10b981, #06b6d4, #3b82f6);
+            background-size: 200% 100%;
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-top: 5px;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            animation: gradientLine 4s linear infinite;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s ease;
+        }
+        .submit-btn:hover::before { left: 100%; }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(6, 182, 212, 0.5), 0 0 40px rgba(168, 85, 247, 0.3);
+        }
+
+        .submit-btn:active { transform: translateY(-1px) scale(0.99); }
+
+        .empty-state {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 40px 10px;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empty-state .icon {
+            font-size: 45px;
+            opacity: 0.6;
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50%      { transform: scale(1.1); opacity: 0.9; }
+        }
+
+        /* Problem items — different status colors */
+        .problem-item {
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .problem-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .problem-item .row1 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .problem-item .title { color: #fff; font-size: 13.5px; font-weight: 500; }
+
+        .badge-status {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .status-PENDING     { background: rgba(255, 193, 7, 0.2);  color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.5); }
+        .status-IN_PROGRESS { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); }
+        .status-RESOLVED    { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.5); }
+        .status-REJECTED    { background: rgba(239, 68, 68, 0.2);  color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5); }
+
+        .problem-item .meta { color: rgba(255, 255, 255, 0.5); font-size: 11.5px; }
+    </style>
+</head>
+<body>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="orb orb4"></div>
+    <div class="orb orb5"></div>
+
+    <div class="dashboard-container">
+        <div class="topbar">
+            <div class="welcome-text">
+                <h3>👋 Welcome, <span th:text="${studentName}"></span></h3>
+                <p>Roll: <span th:text="${studentRoll}"></span></p>
+            </div>
+            <a th:href="@{/student/logout}" class="logout-btn">🚪 Logout</a>
+        </div>
+
+        <div class="grid">
+            <div class="glass-panel">
+                <h4>📝 Submit a New Problem</h4>
+                <form th:action="@{/student/submit}" method="post">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" class="glass-select" required>
+                            <option value=""></option>
+                            <option>WiFi / Internet</option>
+                            <option>Hostel</option>
+                            <option>Computer Lab</option>
+                            <option>Library</option>
+                            <option>Canteen</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Problem Title</label>
+                        <input type="text" name="title" class="glass-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" class="glass-textarea" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">🚀 Submit Problem</button>
+                </form>
+            </div>
+
+            <div class="glass-panel">
+                <h4>📋 My Problems</h4>
+                <div id="problemList">
+
+                    <!-- Agar koi problem nahi hai -->
+                    <div th:if="${problems == null or problems.isEmpty()}" class="empty-state">
+                        <div class="icon">📭</div>
+                        No problems submitted yet.
+                    </div>
+
+                    <!-- Agar problems hain toh loop chalao -->
+                    <div th:each="p : ${problems}" class="problem-item">
+                        <div class="row1">
+                            <span class="title" th:text="${p.title}"></span>
+                            <span class="badge-status"
+                                  th:classappend="${p.status == 'PENDING'} ? 'status-PENDING' :
+                                      (${p.status == 'IN_PROGRESS'} ? 'status-IN_PROGRESS' :
+                                      (${p.status == 'RESOLVED'} ? 'status-RESOLVED' : 'status-REJECTED'))"
+                                  th:text="${p.status}"></span>
+                        </div>
+                        <div class="meta">
+                            <span th:text="'ID: #' + ${p.id}"></span> •
+                            <span th:text="${p.category}"></span> •
+                            <span th:text="${#temporals.format(p.createdAt, 'dd MMM yyyy, HH:mm')}"></span>
+                        </div>
+                        <div th:if="${p.adminRemark != null and !p.adminRemark.isEmpty()}"
+                             style="margin-top: 8px; font-size: 12px; color: #6ee7b7;">
+                            💬 <span th:text="${p.adminRemark}"></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Naam aur roll backend se session ke through aayega
+
+        function submitProblem(e) {
+            e.preventDefault();
+            alert("Problem submitted!");
+            e.target.reset();
+        }
+    </script>
+</body>
+</html>

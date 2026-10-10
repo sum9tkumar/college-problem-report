@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Problem</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #6a11cb);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; animation: float 12s ease-in-out infinite; }
+        .orb1 { width: 300px; height: 300px; background: #667eea; top: -80px; left: -80px; }
+        .orb2 { width: 350px; height: 350px; background: #f093fb; bottom: -100px; right: -100px; animation-delay: 3s; }
+        .orb3 { width: 250px; height: 250px; background: #4facfe; top: 40%; right: 10%; animation-delay: 6s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33%      { transform: translate(30px, -40px) scale(1.1); }
+            66%      { transform: translate(-20px, 30px) scale(0.95); }
+        }
+
+        .glass-card {
+            position: relative;
+            z-index: 10;
+            width: 550px;
+            padding: 45px 40px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            text-align: center;
+            opacity: 0;
+            transform: translateY(40px) scale(0.95);
+            animation: cardEnter 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+        }
+
+        @keyframes cardEnter { to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .avatar {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 70px; height: 70px; border-radius: 20px;
+            background: rgba(102, 126, 234, 0.25);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            font-size: 32px; margin-bottom: 18px;
+            animation: fadeUp 0.8s ease 0.4s both;
+        }
+
+        h2 { color: #fff; font-size: 22px; font-weight: 600; margin-bottom: 6px; animation: fadeUp 0.8s ease 0.5s both; }
+        .subtitle { color: rgba(255,255,255,0.65); font-size: 13px; margin-bottom: 25px; animation: fadeUp 0.8s ease 0.6s both; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group { text-align: left; margin-bottom: 15px; animation: fadeUp 0.7s ease 0.8s both; }
+
+        .form-group label {
+            display: block;
+            color: rgba(255,255,255,0.75);
+            font-size: 12.5px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .glass-input {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            outline: none;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(102, 126, 234, 0.7);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .glass-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #4facfe);
+            background-size: 200% 100%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            animation: fadeUp 0.7s ease 1s both, gradientShift 4s linear infinite;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .glass-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+            transition: left 0.6s ease;
+        }
+        .glass-btn:hover::before { left: 100%; }
+
+        .glass-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Result Card */
+        .result-card {
+            margin-top: 25px;
+            padding: 22px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: left;
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        .result-card h5 {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-card .badge-status {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .status-PENDING     { background: rgba(249, 115, 22, 0.25); color: #fdba74; border: 1px solid rgba(249, 115, 22, 0.5); }
+        .status-IN_PROGRESS { background: rgba(59, 130, 246, 0.25); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.5); }
+        .status-RESOLVED    { background: rgba(16, 185, 129, 0.25); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.5); }
+        .status-REJECTED    { background: rgba(220, 38, 38, 0.25);  color: #fca5a5; border: 1px solid rgba(220, 38, 38, 0.5); }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .result-row:last-child { border-bottom: none; }
+        .result-row .label { color: rgba(255,255,255,0.6); font-weight: 400; }
+        .result-row .value { color: #fff; font-weight: 500; text-align: right; max-width: 60%; word-break: break-word; }
+
+        .remark-box {
+            margin-top: 12px;
+            padding: 12px 15px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 10px;
+            color: #6ee7b7;
+            font-size: 12.5px;
+        }
+
+        .alert-error {
+            margin-top: 20px;
+            padding: 14px 18px;
+            background: rgba(220, 38, 38, 0.15);
+            border: 1px solid rgba(220, 38, 38, 0.4);
+            border-radius: 12px;
+            color: #fca5a5;
+            font-size: 13.5px;
+            animation: fadeUp 0.5s ease;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 22px;
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            text-decoration: none;
+            transition: color 0.3s;
+            animation: fadeUp 0.7s ease 1.2s both;
+        }
+        .back-link:hover { color: #fff; }
+
+        @media (max-width: 600px) {
+            .glass-card { width: 100%; padding: 35px 22px; }
+            h2 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="glass-card">
+    <div class="avatar">🔍</div>
+    <h2>Track Your Problem</h2>
+    <p class="subtitle">Enter your Problem ID to see the current status</p>
+
+    <form th:action="@{/track}" method="post">
+        <div class="form-group">
+            <label>Problem ID</label>
+            <input type="number" name="id" class="glass-input" placeholder="e.g. 1" required>
+        </div>
+        <button type="submit" class="glass-btn">🔍 Track Problem</button>
+    </form>
+
+    <!-- Result Card -->
+    <div th:if="${problem != null}" class="result-card">
+        <h5>
+            <span th:text="'Problem #' + ${problem.id}"></span>
+            <span class="badge-status"
+                  th:classappend="${problem.status == 'PENDING'} ? 'status-PENDING' :
+                                      (${problem.status == 'IN_PROGRESS'} ? 'status-IN_PROGRESS' :
+                                      (${problem.status == 'RESOLVED'} ? 'status-RESOLVED' : 'status-REJECTED'))"
+                  th:text="${problem.status}"></span>
+        </h5>
+
+        <div class="result-row">
+            <span class="label">Title</span>
+            <span class="value" th:text="${problem.title}"></span>
+        </div>
+        <div class="result-row">
+            <span class="label">Category</span>
+            <span class="value" th:text="${problem.category}"></span>
+        </div>
+        <div class="result-row">
+            <span class="label">Student</span>
+            <span class="value" th:text="${problem.studentName}"></span>
+        </div>
+        <div class="result-row">
+            <span class="label">Submitted</span>
+            <span class="value" th:text="${#temporals.format(problem.createdAt, 'dd MMM yyyy, HH:mm')}"></span>
+        </div>
+        <div class="result-row">
+            <span class="label">Last Updated</span>
+            <span class="value" th:text="${#temporals.format(problem.updatedAt, 'dd MMM yyyy, HH:mm')}"></span>
+        </div>
+        <div class="result-row">
+            <span class="label">Description</span>
+            <span class="value" th:text="${problem.description}"></span>
+        </div>
+
+        <div th:if="${problem.adminRemark != null and !problem.adminRemark.isEmpty()}" class="remark-box">
+            💬 <strong>Admin Remark:</strong> <span th:text="${problem.adminRemark}"></span>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    <div th:if="${error != null}" class="alert-error" th:text="${error}"></div>
+
+    <a th:href="@{/}" class="back-link">← Back to Home</a>
+</div>
+</body>
+</html>
